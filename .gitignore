@@ -8,7 +8,7 @@ backend/app/frontend/
 /playwright/.cache/
 
 .venv
-.env
+*.env
 __pycache__
 app.egg-info
 *.pyc
