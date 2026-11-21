@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pydantic import PostgresDsn, computed_field, field_validator
+from pydantic import PostgresDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
@@ -45,16 +45,6 @@ class Settings(BaseSettings):
     SAMPLE_DIR: Path = BACKEND_DIR / "samples"
 
     SENTRY_DSN: str | None = None
-
-    @field_validator("DATABASE_URL", mode="before")
-    @classmethod
-    def _use_psycopg_driver(cls, value: str | PostgresDsn) -> str:
-        """把 postgres:// 统一改成 psycopg 驱动。"""
-        database_url = str(value)
-        for scheme in ("postgres://", "postgresql://"):
-            if database_url.startswith(scheme):
-                return database_url.replace(scheme, "postgresql+psycopg://", 1)
-        return database_url
 
     @computed_field  # type: ignore[prop-decorator]
     @property

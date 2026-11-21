@@ -93,4 +93,6 @@ npx openapi-ts
 
 ## 下一步
 
-从 **A3（依赖状态）** 继续：A3 → A6（初始迁移）→ A7（测试脚手架）→ B（结构切块）→ …
+实现顺序与当前进度见 [docs/implementation-order.md](docs/implementation-order.md)。
+
+当前进行到 **A6（初始迁移）**，之后是 A7（测试库夹具）→ B（结构切块）。

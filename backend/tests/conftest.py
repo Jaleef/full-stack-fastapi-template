@@ -18,7 +18,11 @@ from app.main import app
 def test_engine() -> Engine:
     """创建指向独立测试库的引擎。"""
     url = os.environ.get("TEST_DATABASE_URL") or str(settings.DATABASE_URL)
-    return create_engine(url, pool_pre_ping=True)
+    return create_engine(
+        url,
+        pool_pre_ping=True,
+        connect_args={"connect_timeout": 5},
+    )
 
 
 @pytest.fixture()
