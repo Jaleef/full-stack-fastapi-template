@@ -1,3 +1,5 @@
+"""FastAPI application entry point."""
+
 from pathlib import Path
 
 import sentry_sdk
@@ -12,11 +14,12 @@ FRONTEND_DIR = Path(__file__).parent / "frontend"
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
+    """为路由生成稳定的 OpenAPI operation id。"""
     return f"{route.tags[0]}-{route.name}"
 
 
-if settings.SENTRY_DSN and settings.FASTAPI_ENV != "development":
-    sentry_sdk.init(dsn=str(settings.SENTRY_DSN), enable_tracing=True)
+if settings.SENTRY_DSN:
+    sentry_sdk.init(dsn=settings.SENTRY_DSN, enable_tracing=True)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -33,4 +36,6 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
-app.frontend("/", directory=FRONTEND_DIR)
+
+if FRONTEND_DIR.exists():
+    app.frontend("/", directory=FRONTEND_DIR)

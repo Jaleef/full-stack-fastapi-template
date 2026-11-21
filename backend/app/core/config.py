@@ -1,91 +1,72 @@
-import warnings
-from typing import Literal, Self
+"""应用配置。"""
 
-from pydantic import (
-    EmailStr,
-    HttpUrl,
-    PostgresDsn,
-    computed_field,
-    field_validator,
-    model_validator,
-)
+from pathlib import Path
+
+from pydantic import PostgresDsn, computed_field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+PROJECT_DIR = BACKEND_DIR.parent
 
 
 class Settings(BaseSettings):
+    """运行时配置，来自 .env 与 .env.local。"""
+
     model_config = SettingsConfigDict(
-        # Use top level .env file (one level above ./backend/)
-        env_file="../.env",
+        env_file=(
+            str(PROJECT_DIR / ".env"),
+        ),
         env_ignore_empty=True,
         extra="ignore",
     )
-    API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str
-    # 60 minutes * 24 hours * 8 days = 8 days
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
-    FRONTEND_HOST: str = "http://localhost:5173"
-    FASTAPI_ENV: Literal["development"] | None = None
 
-    PROJECT_NAME: str
-    SENTRY_DSN: HttpUrl | None = None
+    API_V1_STR: str = "/api/v1"
+    PROJECT_NAME: str = "Consistency Analyzer"
+    FRONTEND_HOST: str = "http://localhost:5173"
+
     DATABASE_URL: PostgresDsn
+    TEST_DATABASE_URL: str | None = None
+
+    LLM_BASE_URL: str = "https://api.deepseek.com"
+    LLM_API_KEY: str = ""
+    LLM_MODEL: str = "deepseek-flash"
+    LLM_TIMEOUT: int = 60
+    LLM_CONCURRENCY: int = 8
+    LLM_MAX_CALLS: int = 800
+
+    EMBEDDING_BASE_URL: str = ""
+    EMBEDDING_API_KEY: str = ""
+    EMBEDDING_MODEL: str = "bge-m3"
+    EMBEDDING_DIM: int = 1024
+
+    CANDIDATE_K: int = 8
+
+    DATA_DIR: Path = BACKEND_DIR / "data"
+    SAMPLE_DIR: Path = BACKEND_DIR / "samples"
+
+    SENTRY_DSN: str | None = None
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
     def _use_psycopg_driver(cls, value: str | PostgresDsn) -> str:
+        """把 postgres:// 统一改成 psycopg 驱动。"""
         database_url = str(value)
         for scheme in ("postgres://", "postgresql://"):
             if database_url.startswith(scheme):
                 return database_url.replace(scheme, "postgresql+psycopg://", 1)
         return database_url
 
-    SMTP_TLS: bool = True
-    SMTP_SSL: bool = False
-    SMTP_PORT: int = 587
-    SMTP_HOST: str | None = None
-    SMTP_USER: str | None = None
-    SMTP_PASSWORD: str | None = None
-    EMAILS_FROM_EMAIL: EmailStr | None = None
-    EMAILS_FROM_NAME: str | None = None
-
-    @model_validator(mode="after")
-    def _set_default_emails_from(self) -> Self:
-        if not self.EMAILS_FROM_NAME:
-            self.EMAILS_FROM_NAME = self.PROJECT_NAME
-        return self
-
-    EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 48
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def llm_enabled(self) -> bool:
+        """是否已配置对话模型。"""
+        return bool(self.LLM_API_KEY)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def emails_enabled(self) -> bool:
-        return bool(self.SMTP_HOST and self.EMAILS_FROM_EMAIL)
-
-    EMAIL_TEST_USER: EmailStr = "test@example.com"
-    FIRST_SUPERUSER: EmailStr
-    FIRST_SUPERUSER_PASSWORD: str
-
-    def _check_default_secret(self, var_name: str, value: str | None) -> None:
-        if value == "changethis":
-            message = (
-                f'The value of {var_name} is "changethis", '
-                "for security, please change it, at least for deployments."
-            )
-            if self.FASTAPI_ENV == "development":
-                warnings.warn(message, stacklevel=1)
-            else:
-                raise ValueError(message)
-
-    @model_validator(mode="after")
-    def _enforce_non_default_secrets(self) -> Self:
-        self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
-        for host in self.DATABASE_URL.hosts():
-            self._check_default_secret("DATABASE_URL password", host["password"])
-        self._check_default_secret(
-            "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
-        )
-
-        return self
+    def embedding_enabled(self) -> bool:
+        """是否已配置向量化服务。"""
+        return bool(self.EMBEDDING_BASE_URL)
 
 
-settings = Settings()  # type: ignore # ty: ignore[unused-ignore-comment]
+settings = Settings()  # type: ignore[call-arg]

@@ -5,33 +5,507 @@ export type ClientOptions = {
 };
 
 /**
- * Body_login-login_access_token
+ * Analysis
+ *
+ * One analysis run over a requirements document and a design document.
  */
-export type Body_login_login_access_token = {
+export type Analysis = {
     /**
-     * Grant Type
+     * Id
      */
-    grant_type?: string | null;
+    id?: string;
     /**
-     * Username
+     * Title
      */
-    username: string;
+    title: string;
     /**
-     * Password
+     * Status
      */
-    password: string;
+    status?: string;
     /**
-     * Scope
+     * Progress
      */
-    scope?: string;
+    progress?: number;
     /**
-     * Client Id
+     * Stage
      */
-    client_id?: string | null;
+    stage?: string | null;
     /**
-     * Client Secret
+     * Profile
      */
-    client_secret?: string | null;
+    profile?: string | null;
+    /**
+     * Config
+     */
+    config?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Llm Enabled
+     */
+    llm_enabled?: boolean;
+    /**
+     * Model
+     */
+    model?: string | null;
+    /**
+     * Prompt Version
+     */
+    prompt_version?: string | null;
+    /**
+     * Embedding Model
+     */
+    embedding_model?: string | null;
+    /**
+     * Embedding Dim
+     */
+    embedding_dim?: number | null;
+    /**
+     * Previous Id
+     */
+    previous_id?: string | null;
+    /**
+     * Stats
+     */
+    stats?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Diff
+     */
+    diff?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Error
+     */
+    error?: string | null;
+    /**
+     * Created At
+     */
+    created_at?: string;
+    /**
+     * Finished At
+     */
+    finished_at?: string | null;
+};
+
+/**
+ * AnalysisDocument
+ *
+ * Uploaded source document belonging to an analysis.
+ */
+export type AnalysisDocument = {
+    /**
+     * Id
+     */
+    id?: string;
+    /**
+     * Analysis Id
+     */
+    analysis_id: string;
+    /**
+     * Role
+     */
+    role: string;
+    /**
+     * Filename
+     */
+    filename: string;
+    /**
+     * Stored Path
+     */
+    stored_path: string;
+    /**
+     * Sha256
+     */
+    sha256: string;
+    /**
+     * Size
+     */
+    size?: number;
+    /**
+     * Version Hint
+     */
+    version_hint?: string | null;
+    /**
+     * Warnings
+     */
+    warnings?: Array<string>;
+};
+
+/**
+ * AtomMapping
+ *
+ * Judged link between an atom and a design element.
+ */
+export type AtomMapping = {
+    /**
+     * Id
+     */
+    id?: string;
+    /**
+     * Analysis Id
+     */
+    analysis_id: string;
+    /**
+     * Atom Id
+     */
+    atom_id: string;
+    /**
+     * Element Id
+     */
+    element_id: string;
+    /**
+     * Relation
+     */
+    relation: string;
+    /**
+     * Confidence
+     */
+    confidence?: number;
+    /**
+     * Method
+     */
+    method?: string;
+    /**
+     * Rationale
+     */
+    rationale?: string | null;
+    /**
+     * Evidence
+     */
+    evidence?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Review Status
+     */
+    review_status?: string;
+    /**
+     * Review Note
+     */
+    review_note?: string | null;
+    /**
+     * Created At
+     */
+    created_at?: string;
+};
+
+/**
+ * AtomicRequirement
+ *
+ * Canonical atomic requirement, after semantic merging.
+ */
+export type AtomicRequirement = {
+    /**
+     * Id
+     */
+    id?: string;
+    /**
+     * Analysis Id
+     */
+    analysis_id: string;
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Search Text
+     */
+    search_text?: string;
+    /**
+     * Kind
+     */
+    kind: string;
+    /**
+     * Has Metric
+     */
+    has_metric?: boolean;
+    /**
+     * Variant Count
+     */
+    variant_count?: number;
+    /**
+     * Merge Method
+     */
+    merge_method?: string | null;
+    /**
+     * Merge Confidence
+     */
+    merge_confidence?: number | null;
+    /**
+     * Embedding
+     */
+    embedding?: Array<number> | null;
+    /**
+     * Embedding Model
+     */
+    embedding_model?: string | null;
+    /**
+     * Text Hash
+     */
+    text_hash?: string | null;
+    /**
+     * Order Index
+     */
+    order_index?: number;
+};
+
+/**
+ * Body_analyses-create_analysis
+ */
+export type Body_analyses_create_analysis = {
+    /**
+     * Requirements
+     */
+    requirements: Blob | File;
+    /**
+     * Design
+     */
+    design: Blob | File;
+    /**
+     * Title
+     */
+    title?: string;
+};
+
+/**
+ * DepStatus
+ *
+ * Status of one external dependency.
+ */
+export type DepStatus = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Ok
+     */
+    ok: boolean;
+    /**
+     * Detail
+     */
+    detail?: string;
+};
+
+/**
+ * DesignElement
+ *
+ * A design element extracted from the design document.
+ */
+export type DesignElement = {
+    /**
+     * Id
+     */
+    id?: string;
+    /**
+     * Analysis Id
+     */
+    analysis_id: string;
+    /**
+     * Element Key
+     */
+    element_key: string;
+    /**
+     * Kind
+     */
+    kind: string;
+    /**
+     * Code
+     */
+    code?: string | null;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Level
+     */
+    level?: string | null;
+    /**
+     * Domain
+     */
+    domain?: string | null;
+    /**
+     * Section No
+     */
+    section_no?: string | null;
+    /**
+     * Section Title
+     */
+    section_title?: string | null;
+    /**
+     * Caption
+     */
+    caption?: string | null;
+    /**
+     * Description
+     */
+    description?: string | null;
+    /**
+     * Interface
+     */
+    interface?: string | null;
+    /**
+     * Input
+     */
+    input?: string | null;
+    /**
+     * Output
+     */
+    output?: string | null;
+    /**
+     * Performance
+     */
+    performance?: string | null;
+    /**
+     * Constraints
+     */
+    constraints?: string | null;
+    /**
+     * Test Points
+     */
+    test_points?: string | null;
+    /**
+     * Narrative
+     */
+    narrative?: string | null;
+    /**
+     * Attributes
+     */
+    attributes?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Fields
+     */
+    fields?: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Search Text
+     */
+    search_text?: string;
+    /**
+     * Raw Text
+     */
+    raw_text?: string;
+    /**
+     * Embedding
+     */
+    embedding?: Array<number> | null;
+    /**
+     * Embedding Model
+     */
+    embedding_model?: string | null;
+    /**
+     * Text Hash
+     */
+    text_hash?: string | null;
+    /**
+     * Variants
+     */
+    variants?: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Source Refs
+     */
+    source_refs?: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Parent Code
+     */
+    parent_code?: string | null;
+    /**
+     * Order Index
+     */
+    order_index?: number;
+};
+
+/**
+ * Finding
+ *
+ * A consistency finding produced by rules or semantic judging.
+ */
+export type Finding = {
+    /**
+     * Id
+     */
+    id?: string;
+    /**
+     * Analysis Id
+     */
+    analysis_id: string;
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Dimension
+     */
+    dimension: string;
+    /**
+     * Severity
+     */
+    severity: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Detail
+     */
+    detail?: string;
+    /**
+     * Unit Refs
+     */
+    unit_refs?: Array<string>;
+    /**
+     * Atom Refs
+     */
+    atom_refs?: Array<string>;
+    /**
+     * Element Refs
+     */
+    element_refs?: Array<string>;
+    /**
+     * Evidence
+     */
+    evidence?: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Suggestion
+     */
+    suggestion?: string | null;
+    /**
+     * Confidence
+     */
+    confidence?: number | null;
+    /**
+     * Source
+     */
+    source?: string;
+    /**
+     * Fingerprint
+     */
+    fingerprint?: string;
+    /**
+     * Status
+     */
+    status?: string;
+    /**
+     * Note
+     */
+    note?: string | null;
+    /**
+     * Updated At
+     */
+    updated_at?: string;
 };
 
 /**
@@ -45,49 +519,95 @@ export type HTTPValidationError = {
 };
 
 /**
- * ItemCreate
+ * ParseDecision
+ *
+ * LLM verdict for one document block (requirement or design).
  */
-export type ItemCreate = {
-    /**
-     * Title
-     */
-    title: string;
-    /**
-     * Description
-     */
-    description?: string | null;
-};
-
-/**
- * ItemPublic
- */
-export type ItemPublic = {
-    /**
-     * Title
-     */
-    title: string;
-    /**
-     * Description
-     */
-    description?: string | null;
+export type ParseDecision = {
     /**
      * Id
      */
-    id: string;
+    id?: string;
     /**
-     * Owner Id
+     * Analysis Id
      */
-    owner_id: string;
+    analysis_id: string;
     /**
-     * Created At
+     * Role
      */
-    created_at?: string | null;
+    role: string;
+    /**
+     * Block Index
+     */
+    block_index?: number;
+    /**
+     * Section No
+     */
+    section_no?: string | null;
+    /**
+     * Section Title
+     */
+    section_title?: string | null;
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Verdict
+     */
+    verdict: string;
+    /**
+     * Kind
+     */
+    kind?: string | null;
+    /**
+     * Reason
+     */
+    reason?: string | null;
+    /**
+     * Confidence
+     */
+    confidence?: number | null;
+    /**
+     * Order Index
+     */
+    order_index?: number;
 };
 
 /**
- * ItemUpdate
+ * RequirementUnit
+ *
+ * A traceable requirement unit extracted from the requirements document.
  */
-export type ItemUpdate = {
+export type RequirementUnit = {
+    /**
+     * Id
+     */
+    id?: string;
+    /**
+     * Analysis Id
+     */
+    analysis_id: string;
+    /**
+     * Unit Key
+     */
+    unit_key: string;
+    /**
+     * External Id
+     */
+    external_id?: string | null;
+    /**
+     * Parent External Id
+     */
+    parent_external_id?: string | null;
+    /**
+     * Section No
+     */
+    section_no?: string | null;
+    /**
+     * Section Title
+     */
+    section_title?: string | null;
     /**
      * Title
      */
@@ -96,222 +616,34 @@ export type ItemUpdate = {
      * Description
      */
     description?: string | null;
-};
-
-/**
- * ItemsPublic
- */
-export type ItemsPublic = {
     /**
-     * Data
+     * Category
      */
-    data: Array<ItemPublic>;
+    category?: string | null;
     /**
-     * Count
+     * Domain
      */
-    count: number;
-};
-
-/**
- * Message
- */
-export type Message = {
+    domain?: string | null;
     /**
-     * Message
+     * Is Container
      */
-    message: string;
-};
-
-/**
- * NewPassword
- */
-export type NewPassword = {
+    is_container?: boolean;
     /**
-     * Token
+     * Judge Confidence
      */
-    token: string;
+    judge_confidence?: number | null;
     /**
-     * New Password
+     * Judge Reason
      */
-    new_password: string;
-};
-
-/**
- * PrivateUserCreate
- */
-export type PrivateUserCreate = {
+    judge_reason?: string | null;
     /**
-     * Email
+     * Order Index
      */
-    email: string;
+    order_index?: number;
     /**
-     * Password
+     * Raw Text
      */
-    password: string;
-    /**
-     * Full Name
-     */
-    full_name: string;
-    /**
-     * Is Verified
-     */
-    is_verified?: boolean;
-};
-
-/**
- * Token
- */
-export type Token = {
-    /**
-     * Access Token
-     */
-    access_token: string;
-    /**
-     * Token Type
-     */
-    token_type?: string;
-};
-
-/**
- * UpdatePassword
- */
-export type UpdatePassword = {
-    /**
-     * Current Password
-     */
-    current_password: string;
-    /**
-     * New Password
-     */
-    new_password: string;
-};
-
-/**
- * UserCreate
- */
-export type UserCreate = {
-    /**
-     * Email
-     */
-    email: string;
-    /**
-     * Is Active
-     */
-    is_active?: boolean;
-    /**
-     * Is Superuser
-     */
-    is_superuser?: boolean;
-    /**
-     * Full Name
-     */
-    full_name?: string | null;
-    /**
-     * Password
-     */
-    password: string;
-};
-
-/**
- * UserPublic
- */
-export type UserPublic = {
-    /**
-     * Email
-     */
-    email: string;
-    /**
-     * Is Active
-     */
-    is_active?: boolean;
-    /**
-     * Is Superuser
-     */
-    is_superuser?: boolean;
-    /**
-     * Full Name
-     */
-    full_name?: string | null;
-    /**
-     * Id
-     */
-    id: string;
-    /**
-     * Created At
-     */
-    created_at?: string | null;
-};
-
-/**
- * UserRegister
- */
-export type UserRegister = {
-    /**
-     * Email
-     */
-    email: string;
-    /**
-     * Password
-     */
-    password: string;
-    /**
-     * Full Name
-     */
-    full_name?: string | null;
-};
-
-/**
- * UserUpdate
- */
-export type UserUpdate = {
-    /**
-     * Email
-     */
-    email?: string | null;
-    /**
-     * Is Active
-     */
-    is_active?: boolean | null;
-    /**
-     * Is Superuser
-     */
-    is_superuser?: boolean | null;
-    /**
-     * Full Name
-     */
-    full_name?: string | null;
-    /**
-     * Password
-     */
-    password?: string | null;
-};
-
-/**
- * UserUpdateMe
- */
-export type UserUpdateMe = {
-    /**
-     * Full Name
-     */
-    full_name?: string | null;
-    /**
-     * Email
-     */
-    email?: string | null;
-};
-
-/**
- * UsersPublic
- */
-export type UsersPublic = {
-    /**
-     * Data
-     */
-    data: Array<UserPublic>;
-    /**
-     * Count
-     */
-    count: number;
+    raw_text?: string;
 };
 
 /**
@@ -342,133 +674,7 @@ export type ValidationError = {
     };
 };
 
-export type loginLoginAccessTokenData = {
-    body: Body_login_login_access_token;
-    path?: never;
-    query?: never;
-    url: '/api/v1/login/access-token';
-};
-
-export type loginLoginAccessTokenErrors = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError;
-};
-
-export type loginLoginAccessTokenError = loginLoginAccessTokenErrors[keyof loginLoginAccessTokenErrors];
-
-export type loginLoginAccessTokenResponses = {
-    /**
-     * Successful Response
-     */
-    200: Token;
-};
-
-export type loginLoginAccessTokenResponse = loginLoginAccessTokenResponses[keyof loginLoginAccessTokenResponses];
-
-export type loginTestTokenData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/login/test-token';
-};
-
-export type loginTestTokenResponses = {
-    /**
-     * Successful Response
-     */
-    200: UserPublic;
-};
-
-export type loginTestTokenResponse = loginTestTokenResponses[keyof loginTestTokenResponses];
-
-export type loginRecoverPasswordData = {
-    body?: never;
-    path: {
-        /**
-         * Email
-         */
-        email: string;
-    };
-    query?: never;
-    url: '/api/v1/password-recovery/{email}';
-};
-
-export type loginRecoverPasswordErrors = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError;
-};
-
-export type loginRecoverPasswordError = loginRecoverPasswordErrors[keyof loginRecoverPasswordErrors];
-
-export type loginRecoverPasswordResponses = {
-    /**
-     * Successful Response
-     */
-    200: Message;
-};
-
-export type loginRecoverPasswordResponse = loginRecoverPasswordResponses[keyof loginRecoverPasswordResponses];
-
-export type loginResetPasswordData = {
-    body: NewPassword;
-    path?: never;
-    query?: never;
-    url: '/api/v1/reset-password/';
-};
-
-export type loginResetPasswordErrors = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError;
-};
-
-export type loginResetPasswordError = loginResetPasswordErrors[keyof loginResetPasswordErrors];
-
-export type loginResetPasswordResponses = {
-    /**
-     * Successful Response
-     */
-    200: Message;
-};
-
-export type loginResetPasswordResponse = loginResetPasswordResponses[keyof loginResetPasswordResponses];
-
-export type loginRecoverPasswordHtmlContentData = {
-    body?: never;
-    path: {
-        /**
-         * Email
-         */
-        email: string;
-    };
-    query?: never;
-    url: '/api/v1/password-recovery-html-content/{email}';
-};
-
-export type loginRecoverPasswordHtmlContentErrors = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError;
-};
-
-export type loginRecoverPasswordHtmlContentError = loginRecoverPasswordHtmlContentErrors[keyof loginRecoverPasswordHtmlContentErrors];
-
-export type loginRecoverPasswordHtmlContentResponses = {
-    /**
-     * Successful Response
-     */
-    200: string;
-};
-
-export type loginRecoverPasswordHtmlContentResponse = loginRecoverPasswordHtmlContentResponses[keyof loginRecoverPasswordHtmlContentResponses];
-
-export type usersReadUsersData = {
+export type analysesListAnalysesData = {
     body?: never;
     path?: never;
     query?: {
@@ -481,278 +687,609 @@ export type usersReadUsersData = {
          */
         limit?: number;
     };
-    url: '/api/v1/users/';
+    url: '/api/v1/analyses';
 };
 
-export type usersReadUsersErrors = {
+export type analysesListAnalysesErrors = {
     /**
      * Validation Error
      */
     422: HTTPValidationError;
 };
 
-export type usersReadUsersError = usersReadUsersErrors[keyof usersReadUsersErrors];
+export type analysesListAnalysesError = analysesListAnalysesErrors[keyof analysesListAnalysesErrors];
 
-export type usersReadUsersResponses = {
+export type analysesListAnalysesResponses = {
     /**
+     * Response Analyses-List Analyses
+     *
      * Successful Response
      */
-    200: UsersPublic;
+    200: Array<Analysis>;
 };
 
-export type usersReadUsersResponse = usersReadUsersResponses[keyof usersReadUsersResponses];
+export type analysesListAnalysesResponse = analysesListAnalysesResponses[keyof analysesListAnalysesResponses];
 
-export type usersCreateUserData = {
-    body: UserCreate;
+export type analysesCreateAnalysisData = {
+    body: Body_analyses_create_analysis;
     path?: never;
     query?: never;
-    url: '/api/v1/users/';
+    url: '/api/v1/analyses';
 };
 
-export type usersCreateUserErrors = {
+export type analysesCreateAnalysisErrors = {
     /**
      * Validation Error
      */
     422: HTTPValidationError;
 };
 
-export type usersCreateUserError = usersCreateUserErrors[keyof usersCreateUserErrors];
+export type analysesCreateAnalysisError = analysesCreateAnalysisErrors[keyof analysesCreateAnalysisErrors];
 
-export type usersCreateUserResponses = {
+export type analysesCreateAnalysisResponses = {
     /**
      * Successful Response
      */
-    200: UserPublic;
+    200: Analysis;
 };
 
-export type usersCreateUserResponse = usersCreateUserResponses[keyof usersCreateUserResponses];
+export type analysesCreateAnalysisResponse = analysesCreateAnalysisResponses[keyof analysesCreateAnalysisResponses];
 
-export type usersDeleteUserMeData = {
+export type analysesCreateSampleAnalysisData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/v1/users/me';
+    url: '/api/v1/analyses/sample';
 };
 
-export type usersDeleteUserMeResponses = {
+export type analysesCreateSampleAnalysisResponses = {
     /**
      * Successful Response
      */
-    200: Message;
+    200: Analysis;
 };
 
-export type usersDeleteUserMeResponse = usersDeleteUserMeResponses[keyof usersDeleteUserMeResponses];
+export type analysesCreateSampleAnalysisResponse = analysesCreateSampleAnalysisResponses[keyof analysesCreateSampleAnalysisResponses];
 
-export type usersReadUserMeData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/users/me';
-};
-
-export type usersReadUserMeResponses = {
-    /**
-     * Successful Response
-     */
-    200: UserPublic;
-};
-
-export type usersReadUserMeResponse = usersReadUserMeResponses[keyof usersReadUserMeResponses];
-
-export type usersUpdateUserMeData = {
-    body: UserUpdateMe;
-    path?: never;
-    query?: never;
-    url: '/api/v1/users/me';
-};
-
-export type usersUpdateUserMeErrors = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError;
-};
-
-export type usersUpdateUserMeError = usersUpdateUserMeErrors[keyof usersUpdateUserMeErrors];
-
-export type usersUpdateUserMeResponses = {
-    /**
-     * Successful Response
-     */
-    200: UserPublic;
-};
-
-export type usersUpdateUserMeResponse = usersUpdateUserMeResponses[keyof usersUpdateUserMeResponses];
-
-export type usersUpdatePasswordMeData = {
-    body: UpdatePassword;
-    path?: never;
-    query?: never;
-    url: '/api/v1/users/me/password';
-};
-
-export type usersUpdatePasswordMeErrors = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError;
-};
-
-export type usersUpdatePasswordMeError = usersUpdatePasswordMeErrors[keyof usersUpdatePasswordMeErrors];
-
-export type usersUpdatePasswordMeResponses = {
-    /**
-     * Successful Response
-     */
-    200: Message;
-};
-
-export type usersUpdatePasswordMeResponse = usersUpdatePasswordMeResponses[keyof usersUpdatePasswordMeResponses];
-
-export type usersRegisterUserData = {
-    body: UserRegister;
-    path?: never;
-    query?: never;
-    url: '/api/v1/users/signup';
-};
-
-export type usersRegisterUserErrors = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError;
-};
-
-export type usersRegisterUserError = usersRegisterUserErrors[keyof usersRegisterUserErrors];
-
-export type usersRegisterUserResponses = {
-    /**
-     * Successful Response
-     */
-    200: UserPublic;
-};
-
-export type usersRegisterUserResponse = usersRegisterUserResponses[keyof usersRegisterUserResponses];
-
-export type usersDeleteUserData = {
+export type analysesDeleteAnalysisData = {
     body?: never;
     path: {
         /**
-         * User Id
+         * Analysis Id
          */
-        user_id: string;
+        analysis_id: string;
     };
     query?: never;
-    url: '/api/v1/users/{user_id}';
+    url: '/api/v1/analyses/{analysis_id}';
 };
 
-export type usersDeleteUserErrors = {
+export type analysesDeleteAnalysisErrors = {
     /**
      * Validation Error
      */
     422: HTTPValidationError;
 };
 
-export type usersDeleteUserError = usersDeleteUserErrors[keyof usersDeleteUserErrors];
+export type analysesDeleteAnalysisError = analysesDeleteAnalysisErrors[keyof analysesDeleteAnalysisErrors];
 
-export type usersDeleteUserResponses = {
+export type analysesDeleteAnalysisResponses = {
     /**
+     * Response Analyses-Delete Analysis
+     *
      * Successful Response
      */
-    200: Message;
+    200: {
+        [key: string]: string;
+    };
 };
 
-export type usersDeleteUserResponse = usersDeleteUserResponses[keyof usersDeleteUserResponses];
+export type analysesDeleteAnalysisResponse = analysesDeleteAnalysisResponses[keyof analysesDeleteAnalysisResponses];
 
-export type usersReadUserByIdData = {
+export type analysesGetAnalysisData = {
     body?: never;
     path: {
         /**
-         * User Id
+         * Analysis Id
          */
-        user_id: string;
+        analysis_id: string;
     };
     query?: never;
-    url: '/api/v1/users/{user_id}';
+    url: '/api/v1/analyses/{analysis_id}';
 };
 
-export type usersReadUserByIdErrors = {
+export type analysesGetAnalysisErrors = {
     /**
      * Validation Error
      */
     422: HTTPValidationError;
 };
 
-export type usersReadUserByIdError = usersReadUserByIdErrors[keyof usersReadUserByIdErrors];
+export type analysesGetAnalysisError = analysesGetAnalysisErrors[keyof analysesGetAnalysisErrors];
 
-export type usersReadUserByIdResponses = {
+export type analysesGetAnalysisResponses = {
     /**
      * Successful Response
      */
-    200: UserPublic;
+    200: Analysis;
 };
 
-export type usersReadUserByIdResponse = usersReadUserByIdResponses[keyof usersReadUserByIdResponses];
+export type analysesGetAnalysisResponse = analysesGetAnalysisResponses[keyof analysesGetAnalysisResponses];
 
-export type usersUpdateUserData = {
-    body: UserUpdate;
+export type analysesListDocumentsData = {
+    body?: never;
     path: {
         /**
-         * User Id
+         * Analysis Id
          */
-        user_id: string;
+        analysis_id: string;
     };
     query?: never;
-    url: '/api/v1/users/{user_id}';
+    url: '/api/v1/analyses/{analysis_id}/documents';
 };
 
-export type usersUpdateUserErrors = {
+export type analysesListDocumentsErrors = {
     /**
      * Validation Error
      */
     422: HTTPValidationError;
 };
 
-export type usersUpdateUserError = usersUpdateUserErrors[keyof usersUpdateUserErrors];
+export type analysesListDocumentsError = analysesListDocumentsErrors[keyof analysesListDocumentsErrors];
 
-export type usersUpdateUserResponses = {
+export type analysesListDocumentsResponses = {
+    /**
+     * Response Analyses-List Documents
+     *
+     * Successful Response
+     */
+    200: Array<AnalysisDocument>;
+};
+
+export type analysesListDocumentsResponse = analysesListDocumentsResponses[keyof analysesListDocumentsResponses];
+
+export type analysesUpdateAnalysisConfigData = {
+    /**
+     * Config
+     */
+    body: {
+        [key: string]: unknown;
+    };
+    path: {
+        /**
+         * Analysis Id
+         */
+        analysis_id: string;
+    };
+    query?: never;
+    url: '/api/v1/analyses/{analysis_id}/config';
+};
+
+export type analysesUpdateAnalysisConfigErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type analysesUpdateAnalysisConfigError = analysesUpdateAnalysisConfigErrors[keyof analysesUpdateAnalysisConfigErrors];
+
+export type analysesUpdateAnalysisConfigResponses = {
     /**
      * Successful Response
      */
-    200: UserPublic;
+    200: Analysis;
 };
 
-export type usersUpdateUserResponse = usersUpdateUserResponses[keyof usersUpdateUserResponses];
+export type analysesUpdateAnalysisConfigResponse = analysesUpdateAnalysisConfigResponses[keyof analysesUpdateAnalysisConfigResponses];
 
-export type utilsTestEmailData = {
+export type analysesStartAnalysisData = {
     body?: never;
-    path?: never;
+    path: {
+        /**
+         * Analysis Id
+         */
+        analysis_id: string;
+    };
+    query?: never;
+    url: '/api/v1/analyses/{analysis_id}/run';
+};
+
+export type analysesStartAnalysisErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type analysesStartAnalysisError = analysesStartAnalysisErrors[keyof analysesStartAnalysisErrors];
+
+export type analysesStartAnalysisResponses = {
+    /**
+     * Successful Response
+     */
+    200: Analysis;
+};
+
+export type analysesStartAnalysisResponse = analysesStartAnalysisResponses[keyof analysesStartAnalysisResponses];
+
+export type analysesRerunAnalysisData = {
+    body?: never;
+    path: {
+        /**
+         * Analysis Id
+         */
+        analysis_id: string;
+    };
+    query?: never;
+    url: '/api/v1/analyses/{analysis_id}/rerun';
+};
+
+export type analysesRerunAnalysisErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type analysesRerunAnalysisError = analysesRerunAnalysisErrors[keyof analysesRerunAnalysisErrors];
+
+export type analysesRerunAnalysisResponses = {
+    /**
+     * Successful Response
+     */
+    200: Analysis;
+};
+
+export type analysesRerunAnalysisResponse = analysesRerunAnalysisResponses[keyof analysesRerunAnalysisResponses];
+
+export type analysesListParseDecisionsData = {
+    body?: never;
+    path: {
+        /**
+         * Analysis Id
+         */
+        analysis_id: string;
+    };
+    query?: {
+        /**
+         * Role
+         */
+        role?: string | null;
+    };
+    url: '/api/v1/analyses/{analysis_id}/parse-decisions';
+};
+
+export type analysesListParseDecisionsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type analysesListParseDecisionsError = analysesListParseDecisionsErrors[keyof analysesListParseDecisionsErrors];
+
+export type analysesListParseDecisionsResponses = {
+    /**
+     * Response Analyses-List Parse Decisions
+     *
+     * Successful Response
+     */
+    200: Array<ParseDecision>;
+};
+
+export type analysesListParseDecisionsResponse = analysesListParseDecisionsResponses[keyof analysesListParseDecisionsResponses];
+
+export type analysesListUnitsData = {
+    body?: never;
+    path: {
+        /**
+         * Analysis Id
+         */
+        analysis_id: string;
+    };
+    query?: {
+        /**
+         * Uncovered
+         */
+        uncovered?: boolean;
+    };
+    url: '/api/v1/analyses/{analysis_id}/units';
+};
+
+export type analysesListUnitsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type analysesListUnitsError = analysesListUnitsErrors[keyof analysesListUnitsErrors];
+
+export type analysesListUnitsResponses = {
+    /**
+     * Response Analyses-List Units
+     *
+     * Successful Response
+     */
+    200: Array<RequirementUnit>;
+};
+
+export type analysesListUnitsResponse = analysesListUnitsResponses[keyof analysesListUnitsResponses];
+
+export type analysesListAtomsData = {
+    body?: never;
+    path: {
+        /**
+         * Analysis Id
+         */
+        analysis_id: string;
+    };
+    query?: {
+        /**
+         * With Sources
+         */
+        with_sources?: boolean;
+    };
+    url: '/api/v1/analyses/{analysis_id}/atoms';
+};
+
+export type analysesListAtomsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type analysesListAtomsError = analysesListAtomsErrors[keyof analysesListAtomsErrors];
+
+export type analysesListAtomsResponses = {
+    /**
+     * Response Analyses-List Atoms
+     *
+     * Successful Response
+     */
+    200: Array<AtomicRequirement>;
+};
+
+export type analysesListAtomsResponse = analysesListAtomsResponses[keyof analysesListAtomsResponses];
+
+export type analysesListElementsData = {
+    body?: never;
+    path: {
+        /**
+         * Analysis Id
+         */
+        analysis_id: string;
+    };
+    query?: {
+        /**
+         * Kind
+         */
+        kind?: string | null;
+        /**
+         * Domain
+         */
+        domain?: string | null;
+    };
+    url: '/api/v1/analyses/{analysis_id}/elements';
+};
+
+export type analysesListElementsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type analysesListElementsError = analysesListElementsErrors[keyof analysesListElementsErrors];
+
+export type analysesListElementsResponses = {
+    /**
+     * Response Analyses-List Elements
+     *
+     * Successful Response
+     */
+    200: Array<DesignElement>;
+};
+
+export type analysesListElementsResponse = analysesListElementsResponses[keyof analysesListElementsResponses];
+
+export type analysesListMappingsData = {
+    body?: never;
+    path: {
+        /**
+         * Analysis Id
+         */
+        analysis_id: string;
+    };
+    query?: {
+        /**
+         * Relation
+         */
+        relation?: string | null;
+        /**
+         * Domain
+         */
+        domain?: string | null;
+    };
+    url: '/api/v1/analyses/{analysis_id}/mappings';
+};
+
+export type analysesListMappingsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type analysesListMappingsError = analysesListMappingsErrors[keyof analysesListMappingsErrors];
+
+export type analysesListMappingsResponses = {
+    /**
+     * Response Analyses-List Mappings
+     *
+     * Successful Response
+     */
+    200: Array<AtomMapping>;
+};
+
+export type analysesListMappingsResponse = analysesListMappingsResponses[keyof analysesListMappingsResponses];
+
+export type analysesListFindingsData = {
+    body?: never;
+    path: {
+        /**
+         * Analysis Id
+         */
+        analysis_id: string;
+    };
+    query?: {
+        /**
+         * Severity
+         */
+        severity?: string | null;
+        /**
+         * Dimension
+         */
+        dimension?: string | null;
+        /**
+         * Status
+         */
+        status?: string | null;
+    };
+    url: '/api/v1/analyses/{analysis_id}/findings';
+};
+
+export type analysesListFindingsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type analysesListFindingsError = analysesListFindingsErrors[keyof analysesListFindingsErrors];
+
+export type analysesListFindingsResponses = {
+    /**
+     * Response Analyses-List Findings
+     *
+     * Successful Response
+     */
+    200: Array<Finding>;
+};
+
+export type analysesListFindingsResponse = analysesListFindingsResponses[keyof analysesListFindingsResponses];
+
+export type analysesExportAnalysisData = {
+    body?: never;
+    path: {
+        /**
+         * Analysis Id
+         */
+        analysis_id: string;
+    };
+    query?: {
+        /**
+         * Format
+         */
+        format?: string;
+    };
+    url: '/api/v1/analyses/{analysis_id}/export';
+};
+
+export type analysesExportAnalysisErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type analysesExportAnalysisError = analysesExportAnalysisErrors[keyof analysesExportAnalysisErrors];
+
+export type analysesExportAnalysisResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type findingsUpdateFindingData = {
+    body?: never;
+    path: {
+        /**
+         * Finding Id
+         */
+        finding_id: string;
+    };
     query: {
         /**
-         * Email To
+         * Status
          */
-        email_to: string;
+        status: string;
+        /**
+         * Note
+         */
+        note?: string | null;
     };
-    url: '/api/v1/utils/test-email/';
+    url: '/api/v1/findings/{finding_id}';
 };
 
-export type utilsTestEmailErrors = {
+export type findingsUpdateFindingErrors = {
     /**
      * Validation Error
      */
     422: HTTPValidationError;
 };
 
-export type utilsTestEmailError = utilsTestEmailErrors[keyof utilsTestEmailErrors];
+export type findingsUpdateFindingError = findingsUpdateFindingErrors[keyof findingsUpdateFindingErrors];
 
-export type utilsTestEmailResponses = {
+export type findingsUpdateFindingResponses = {
     /**
      * Successful Response
      */
-    201: Message;
+    200: Finding;
 };
 
-export type utilsTestEmailResponse = utilsTestEmailResponses[keyof utilsTestEmailResponses];
+export type findingsUpdateFindingResponse = findingsUpdateFindingResponses[keyof findingsUpdateFindingResponses];
+
+export type mappingsReviewMappingData = {
+    body?: never;
+    path: {
+        /**
+         * Mapping Id
+         */
+        mapping_id: string;
+    };
+    query: {
+        /**
+         * Review Status
+         */
+        review_status: string;
+        /**
+         * Review Note
+         */
+        review_note?: string | null;
+    };
+    url: '/api/v1/mappings/{mapping_id}';
+};
+
+export type mappingsReviewMappingErrors = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError;
+};
+
+export type mappingsReviewMappingError = mappingsReviewMappingErrors[keyof mappingsReviewMappingErrors];
+
+export type mappingsReviewMappingResponses = {
+    /**
+     * Successful Response
+     */
+    200: AtomMapping;
+};
+
+export type mappingsReviewMappingResponse = mappingsReviewMappingResponses[keyof mappingsReviewMappingResponses];
 
 export type utilsHealthCheckData = {
     body?: never;
@@ -772,176 +1309,20 @@ export type utilsHealthCheckResponses = {
 
 export type utilsHealthCheckResponse = utilsHealthCheckResponses[keyof utilsHealthCheckResponses];
 
-export type itemsReadItemsData = {
+export type utilsDependenciesData = {
     body?: never;
     path?: never;
-    query?: {
-        /**
-         * Skip
-         */
-        skip?: number;
-        /**
-         * Limit
-         */
-        limit?: number;
-    };
-    url: '/api/v1/items/';
-};
-
-export type itemsReadItemsErrors = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError;
-};
-
-export type itemsReadItemsError = itemsReadItemsErrors[keyof itemsReadItemsErrors];
-
-export type itemsReadItemsResponses = {
-    /**
-     * Successful Response
-     */
-    200: ItemsPublic;
-};
-
-export type itemsReadItemsResponse = itemsReadItemsResponses[keyof itemsReadItemsResponses];
-
-export type itemsCreateItemData = {
-    body: ItemCreate;
-    path?: never;
     query?: never;
-    url: '/api/v1/items/';
+    url: '/api/v1/utils/dependencies/';
 };
 
-export type itemsCreateItemErrors = {
+export type utilsDependenciesResponses = {
     /**
-     * Validation Error
-     */
-    422: HTTPValidationError;
-};
-
-export type itemsCreateItemError = itemsCreateItemErrors[keyof itemsCreateItemErrors];
-
-export type itemsCreateItemResponses = {
-    /**
+     * Response Utils-Dependencies
+     *
      * Successful Response
      */
-    200: ItemPublic;
+    200: Array<DepStatus>;
 };
 
-export type itemsCreateItemResponse = itemsCreateItemResponses[keyof itemsCreateItemResponses];
-
-export type itemsDeleteItemData = {
-    body?: never;
-    path: {
-        /**
-         * Id
-         */
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/items/{id}';
-};
-
-export type itemsDeleteItemErrors = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError;
-};
-
-export type itemsDeleteItemError = itemsDeleteItemErrors[keyof itemsDeleteItemErrors];
-
-export type itemsDeleteItemResponses = {
-    /**
-     * Successful Response
-     */
-    200: Message;
-};
-
-export type itemsDeleteItemResponse = itemsDeleteItemResponses[keyof itemsDeleteItemResponses];
-
-export type itemsReadItemData = {
-    body?: never;
-    path: {
-        /**
-         * Id
-         */
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/items/{id}';
-};
-
-export type itemsReadItemErrors = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError;
-};
-
-export type itemsReadItemError = itemsReadItemErrors[keyof itemsReadItemErrors];
-
-export type itemsReadItemResponses = {
-    /**
-     * Successful Response
-     */
-    200: ItemPublic;
-};
-
-export type itemsReadItemResponse = itemsReadItemResponses[keyof itemsReadItemResponses];
-
-export type itemsUpdateItemData = {
-    body: ItemUpdate;
-    path: {
-        /**
-         * Id
-         */
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/items/{id}';
-};
-
-export type itemsUpdateItemErrors = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError;
-};
-
-export type itemsUpdateItemError = itemsUpdateItemErrors[keyof itemsUpdateItemErrors];
-
-export type itemsUpdateItemResponses = {
-    /**
-     * Successful Response
-     */
-    200: ItemPublic;
-};
-
-export type itemsUpdateItemResponse = itemsUpdateItemResponses[keyof itemsUpdateItemResponses];
-
-export type privateCreateUserData = {
-    body: PrivateUserCreate;
-    path?: never;
-    query?: never;
-    url: '/api/v1/private/users/';
-};
-
-export type privateCreateUserErrors = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError;
-};
-
-export type privateCreateUserError = privateCreateUserErrors[keyof privateCreateUserErrors];
-
-export type privateCreateUserResponses = {
-    /**
-     * Successful Response
-     */
-    200: UserPublic;
-};
-
-export type privateCreateUserResponse = privateCreateUserResponses[keyof privateCreateUserResponses];
+export type utilsDependenciesResponse = utilsDependenciesResponses[keyof utilsDependenciesResponses];

@@ -1,88 +1,96 @@
-# Full Stack FastAPI Template
+# 文档一致性分析（需求 ↔ 设计）
 
-[![Test Docker Compose](../../actions/workflows/test-docker-compose.yml/badge.svg)](../../actions/workflows/test-docker-compose.yml)
-[![Test Backend](../../actions/workflows/test-backend.yml/badge.svg)](../../actions/workflows/test-backend.yml)
+面向"需求规格说明 ↔ 设计说明"的文档一致性分析工具。当前处于 **骨架阶段**：目录、数据模型、函数签名已就位，函数体统一为 `...`，业务逻辑尚未实现。
 
-## Technology Stack and Features
+## 技术栈
 
-- ⚡ [**FastAPI**](https://fastapi.tiangolo.com) for the Python backend API.
-  - 🧰 [SQLModel](https://sqlmodel.tiangolo.com) for the Python SQL database interactions (ORM).
-  - 🔍 [Pydantic](https://docs.pydantic.dev), used by FastAPI, for the data validation and settings management.
-  - 💾 [PostgreSQL](https://www.postgresql.org) as the SQL database.
-- 🚀 [React](https://react.dev) for the frontend.
-  - 🧩 Built into the backend application and served by FastAPI on the same domain as the API.
-  - 💃 Using TypeScript, hooks, [Vite](https://vitejs.dev), and other parts of a modern frontend stack.
-  - 🎨 [Tailwind CSS](https://tailwindcss.com) and [shadcn/ui](https://ui.shadcn.com) for the frontend components.
-  - 🤖 An automatically generated frontend client.
-  - 🧪 [Playwright](https://playwright.dev) for end-to-end testing.
-  - 🦇 Dark mode support.
-- ☁️ [FastAPI Cloud](https://fastapicloud.com) for deployment.
-- 🐋 [Docker Compose](https://www.docker.com) for local services and self-hosted deployment.
-  - 📞 [Traefik](https://traefik.io) as a reverse proxy with automatic HTTPS.
-- 🔒 Secure password hashing by default.
-- 🔑 JWT (JSON Web Token) authentication.
-- 📫 Email-based password recovery.
-- ✉️ [React Email](https://react.email) for email templates.
-- 📬 [Mailpit](https://mailpit.axllent.org) for local email testing during development.
-- ✅ Tests with [Pytest](https://pytest.org).
-- 🏭 CI (continuous integration) and CD (continuous deployment) based on GitHub Actions.
+- 后端：FastAPI + SQLModel + PostgreSQL/pgvector + Alembic
+- 模型：外部 OpenAI 兼容服务；chat 默认 DeepSeek，embedding 走独立 `/embeddings`
+- 解析：python-docx；分词 jieba；BM25 用 rank_bm25
+- 前端：React 19 + TanStack Router/Query + shadcn/ui + Tailwind
 
-### Dashboard Login
+## 目录
 
-![Dashboard login screenshot](img/login.png)
+```
+backend/app/
+├── main.py                  应用入口
+├── models.py                10 张数据表
+├── domain.py                枚举与数据结构
+├── crud.py                  数据库读写封装
+├── api/
+│   ├── deps.py              SessionDep
+│   ├── main.py              api_router
+│   └── routes/              analyses / findings / mappings / utils
+├── core/
+│   ├── config.py            Settings
+│   ├── db.py                engine / get_session
+│   └── dependencies.py      外部依赖检查
+└── services/
+    ├── docx_reader.py       docx 结构块读取
+    ├── parsing.py           标题、文档画像、候选切块
+    ├── llm.py               对话模型 + 向量模型客户端
+    ├── retrieval.py         BM25F + pgvector + RRF
+    ├── requirements.py      需求判定、原子化、语义合并
+    ├── design.py            设计要素判定、抽取、去重
+    ├── mapping.py           裁决、校验、反向判定、聚合
+    ├── checks.py            确定性规则
+    ├── prompts.py           提示词构建
+    ├── pipeline.py          流水线编排
+    ├── scoring.py           覆盖率与结论
+    ├── exporters.py         Markdown / CSV 导出
+    └── samples.py           内置样例
 
-### Dashboard - Admin
+frontend/src/
+├── routes/_layout/index.tsx                 工作台
+├── routes/_layout/analysis.$analysisId.tsx  结果页
+├── components/Analysis/*                    上传、确认、进度、概览、问题、映射、审计、导出
+└── hooks/useAnalysis.ts
+```
 
-![Admin dashboard screenshot](img/dashboard.png)
+## 外部依赖
 
-### Dashboard - Items
+- 外部 PostgreSQL，需已启用 `pgvector` 扩展
+- embedding 服务（OpenAI 兼容 `/embeddings`）
+- chat 服务（默认 DeepSeek）
 
-![Items dashboard screenshot](img/dashboard-items.png)
+配置写在 `.env`；真实密钥请放 `.env.local`（已加入 `.gitignore`）。项目不包含 Docker / 部署配置，直接在本机运行即可。
 
-### Dashboard - Dark Mode
+## 运行
 
-![Dark mode dashboard screenshot](img/dashboard-dark.png)
+后端：
 
-### React Email Templates
+```bash
+cd backend
+uv sync
+uv run fastapi dev
+```
 
-![Email templates screenshot](img/react-email.png)
+前端：
 
-### Mailpit - Local Email Testing
+```bash
+npm install
+npm run dev
+```
 
-![Mailpit screenshot](img/mailpit.png)
+> 需要 Node 20+ / npm 11+。
 
-### Interactive API Documentation
+## 生成前端 API 客户端
 
-![API docs](img/docs.png)
+后端路由变化后，按下述方式重新生成 `frontend/src/client`：
 
-## How to Use It
+```bash
+cd backend
+uv run python -c "import json, app.main; open('../frontend/openapi.json','w',encoding='utf-8').write(json.dumps(app.main.app.openapi(), ensure_ascii=False))"
+cd ../frontend
+npx openapi-ts
+```
 
-Click the **Use this template** button at the top of this page to create a new repository.
+## 当前状态
 
-## Backend Development
+- 骨架可导入（`import app.main`）、可构建（`npm run build`）、`ruff` 通过
+- 尚未实现：初始迁移、文档解析、提示词、检索、判定、API 逻辑、前端界面
+- `pytest` 已就位但暂无测试用例，按实现顺序表逐步补齐
 
-Backend docs: [backend/README.md](./backend/README.md).
+## 下一步
 
-## Frontend Development
-
-Frontend docs: [frontend/README.md](./frontend/README.md).
-
-## Deployment
-
-FastAPI Cloud deployment: [deployment.md](./deployment.md).
-
-Self-hosted deployment with Docker Compose: [deployment-docker-compose.md](./deployment-docker-compose.md).
-
-## Development
-
-General development docs: [development.md](./development.md).
-
-This includes the local FastAPI and Vite workflow, Docker Compose services, `.env` configuration, and more.
-
-## Release Notes
-
-Check the file [release-notes.md](./release-notes.md).
-
-## License
-
-The Full Stack FastAPI Template is licensed under the terms of the MIT license.
+从 **A3（依赖状态）** 继续：A3 → A6（初始迁移）→ A7（测试脚手架）→ B（结构切块）→ …
