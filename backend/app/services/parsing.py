@@ -12,7 +12,7 @@ import re
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 
-from app.domain import Block, CandidateBlock, DocRole, Heading, Section
+from app.domain import Block, BlockKind, CandidateBlock, DocRole, Heading, Section
 
 HEADING_RE = re.compile(r"^\s*(\d+(?:\.\d+)*)[\.、]?\s+(\S.*?)\s*$")
 TOC_RE = re.compile(r"^\s*(\S.*?)\s*(?:\t|\s{2,})\s*\d+\s*$")
@@ -199,13 +199,113 @@ def field_map(profile: Profile, labels: list[str]) -> dict[str, str]:
     ...
 
 
+def _is_data_table(header: list[str]) -> bool:
+    """判断表头是否像数据库字段表。"""
+    labels = " ".join(header)
+    return "字段名称" in labels or "字段类型" in labels
+
+
+def _is_constraint_table(header: list[str]) -> bool:
+    """判断表头是否像技术选型/环境约束表。"""
+    labels = " ".join(header)
+    return any(key in labels for key in ("约束", "开发环境", "限制"))
+
+
+def _make_table_candidate(
+    block: Block,
+    rows: list[list[str]],
+    section: Section,
+    role: DocRole,
+    reason: str,
+) -> CandidateBlock:
+    """用一组表格行构造一个候选块。"""
+    return CandidateBlock(
+        block=Block(
+            kind=BlockKind.TABLE,
+            text="",
+            index=block.index,
+            table=rows,
+            caption=block.caption,
+        ),
+        section=section,
+        role=role,
+        reason=reason,
+    )
+
+
 def split_blocks(
     blocks: list[Block],
     role: DocRole,
     profile: Profile,
 ) -> list[CandidateBlock]:
-    """按表格或条款策略把块切成候选。"""
-    ...
+    """按表格或条款策略把块切成候选。
+
+    - 段落：每个非空段落一个候选
+    - 设计文档的字段表：整表一个候选
+    - 设计文档的约束表：每行一个候选
+    - 其余表格：≤8 行整表一个候选；>8 行按“表头 + 5 行”切块
+    """
+    _ = profile  # 文档画像在 B7 之后才会影响切块
+    candidates: list[CandidateBlock] = []
+
+    for block, section in assign_sections(blocks):
+        if block.kind == BlockKind.PARAGRAPH:
+            candidates.append(
+                CandidateBlock(
+                    block=block,
+                    section=section,
+                    role=role,
+                    reason="paragraph",
+                )
+            )
+            continue
+
+        if block.kind != BlockKind.TABLE or not block.table:
+            continue
+
+        rows = block.table
+        header = rows[0]
+
+        if role == DocRole.DESIGN and _is_data_table(header):
+            candidates.append(
+                _make_table_candidate(block, rows, section, role, "table:data")
+            )
+            continue
+
+        if role == DocRole.DESIGN and _is_constraint_table(header):
+            for row_index, row in enumerate(rows[1:], start=1):
+                candidates.append(
+                    _make_table_candidate(
+                        block,
+                        [header, row],
+                        section,
+                        role,
+                        f"table:constraint:{row_index}",
+                    )
+                )
+            continue
+
+        if len(rows) <= 8:
+            candidates.append(
+                _make_table_candidate(block, rows, section, role, "table:record")
+            )
+            continue
+
+        data_rows = rows[1:]
+        total = (len(data_rows) + 4) // 5
+        for part_index in range(total):
+            chunk = [header] + data_rows[part_index * 5 : (part_index + 1) * 5]
+            candidates.append(
+                _make_table_candidate(
+                    block,
+                    chunk,
+                    section,
+                    role,
+                    f"table:chunk:{part_index + 1}/{total}",
+                )
+            )
+
+    return candidates
 
 
 def context_for(block: Block, section: Section) -> str:

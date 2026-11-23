@@ -106,4 +106,4 @@ uv run pytest -q
 
 实现顺序与当前进度见 [docs/implementation-order.md](docs/implementation-order.md)。
 
-当前进行到 **B6（切块策略）**，之后依次是 B7–B8（上下文、阶段自测）。
+当前进行到 **B7（上下文与上限）**，之后是 B8（阶段自测）。
