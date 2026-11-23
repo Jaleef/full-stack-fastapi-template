@@ -31,8 +31,8 @@ target_metadata = SQLModel.metadata
 
 
 def get_url():
-    """返回配置中的数据库地址。"""
-    return str(settings.DATABASE_URL)
+    """优先使用调用方注入的地址（测试/CI），否则用应用配置。"""
+    return config.get_main_option("sqlalchemy.url") or str(settings.DATABASE_URL)
 
 
 def run_migrations_offline():

@@ -85,6 +85,17 @@ cd ../frontend
 npx openapi-ts
 ```
 
+## 测试
+
+测试使用独立数据库（`TEST_DATABASE_URL`），首次运行会自动安装 pgvector、执行迁移，每个用例结束后清空业务表。
+
+```bash
+cd backend
+uv run pytest -q
+```
+
+`conftest.py` 会拒绝 `TEST_DATABASE_URL` 与 `DATABASE_URL` 相同的配置，避免测试清空业务库。
+
 ## 当前状态
 
 - 骨架可导入（`import app.main`）、可构建（`npm run build`）、`ruff` 通过
@@ -95,4 +106,4 @@ npx openapi-ts
 
 实现顺序与当前进度见 [docs/implementation-order.md](docs/implementation-order.md)。
 
-当前进行到 **A7（测试库夹具）**，之后是 B（结构切块）。
+当前进行到 **B1（docx 块读取）**，之后依次是 B2–B8（切块与结构识别）。
