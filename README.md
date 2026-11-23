@@ -106,4 +106,4 @@ uv run pytest -q
 
 实现顺序与当前进度见 [docs/implementation-order.md](docs/implementation-order.md)。
 
-当前进行到 **B1（docx 块读取）**，之后依次是 B2–B8（切块与结构识别）。
+当前进行到 **B6（切块策略）**，之后依次是 B7–B8（上下文、阶段自测）。
