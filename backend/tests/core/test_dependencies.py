@@ -19,7 +19,6 @@ def test_check_postgres_ok() -> None:
         "PostgreSQL 18.0 on x86_64-pc-linux-gnu",
     )
     status = dependencies.check_postgres(session)
-    print(status)
     assert status.ok is True
     assert "18.0" in status.detail
 

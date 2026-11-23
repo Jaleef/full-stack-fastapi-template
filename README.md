@@ -95,4 +95,4 @@ npx openapi-ts
 
 实现顺序与当前进度见 [docs/implementation-order.md](docs/implementation-order.md)。
 
-当前进行到 **A6（初始迁移）**，之后是 A7（测试库夹具）→ B（结构切块）。
+当前进行到 **A7（测试库夹具）**，之后是 B（结构切块）。

@@ -5,10 +5,10 @@
 
 ## 当前进度
 
-- **已完成**：Step 0（清理模板 + 骨架）、A1、A2、A3、A4、A5、H1，共 6 / 73 步
-- **部分完成**：A7（测试夹具已有基础，缺迁移与清表）
-- **当前进行到**：**A6（初始迁移）**
-- **下一步**：A6（初始迁移）→ A7（测试库夹具）→ B1（docx 块读取）
+- **已完成**：Step 0（清理模板 + 骨架）、A1、A2、A3、A4、A5、A6、H1，共 7 / 73 步
+- **部分完成**：A7（测试夹具已有基础，缺测试库迁移与清表）
+- **当前进行到**：**A7（测试库夹具）**
+- **下一步**：A7（测试库夹具）→ B1（docx 块读取）
 
 > 说明：H1（生成前端客户端、路由骨架、侧边栏）在 Step 0 中提前完成，不阻塞后端进度。
 
@@ -25,7 +25,7 @@
 
 | 阶段 | 步数 | 状态 |
 |---|---|---|
-| A 基础设施 | 7 | 5 ✅ / 1 🟡 / 1 ⬜ |
+| A 基础设施 | 7 | 6 ✅ / 1 🟡 / 0 ⬜ |
 | B 文档结构与切块 | 8 | 0 ✅ |
 | C LLM 与检索底座 | 7 | 0 ✅ |
 | D 需求解析 | 8 | 0 ✅ |
@@ -34,7 +34,7 @@
 | G API 与导出 | 8 | 0 ✅ |
 | H 前端 | 9 | 1 ✅（H1） |
 | I 联调与交付 | 5 | 0 ✅ |
-| **合计** | **73** | **6 ✅ / 1 🟡 / 66 ⬜** |
+| **合计** | **73** | **7 ✅ / 1 🟡 / 65 ⬜** |
 
 ---
 
@@ -47,8 +47,8 @@
 | A3 | 依赖状态接口 | 实现 `core/dependencies.py` 与 `GET /api/v1/utils/dependencies` | 返回 db/vector/embedding/llm 四项状态 | ✅ |
 | A4 | 移除模板功能 | 删除 Items、登录/用户/邮件、旧迁移、模板脚本与资产 | `import app.main` 与 `npm run build` 通过 | ✅ |
 | A5 | 数据模型 | `models.py` 10 张表 + `domain.py` 枚举与值对象；补中文注释 | `SQLModel.metadata` 含 10 表，`vector(1024)` 正确 | ✅ |
-| A6 | 初始迁移 | 删除模板旧迁移，生成 initial；建表 + `vector` 列 + HNSW 索引；**不建扩展** | `alembic upgrade head` 成功 | ⬜ |
-| A7 | 测试脚手架 | `TEST_DATABASE_URL`、迁移 fixture、清表 fixture | 空测试能在独立库上跑通 | 🟡（engine/session/client 已有） |
+| A6 | 初始迁移 | 删除模板旧迁移，生成 initial；建表 + `vector` 列 + HNSW 索引；**不建扩展** | `alembic upgrade head` 成功 | ✅（0001_initial，已在外部库验证 upgrade/downgrade） |
+| A7 | 测试脚手架 | `TEST_DATABASE_URL`、迁移 fixture、清表 fixture | 空测试能在独立库上跑通 | 🟡（engine/session/client 已有；缺测试库迁移与清表） |
 
 ## B. 文档结构与切块（8 步）
 

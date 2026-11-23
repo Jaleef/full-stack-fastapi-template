@@ -28,7 +28,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import JSON
+from sqlalchemy import JSON, Index
 from sqlmodel import Field, SQLModel
 
 from app.core.config import settings
@@ -162,6 +162,16 @@ class AtomicRequirement(SQLModel, table=True):
 
     __tablename__ = "atomic_requirement"
 
+    # HNSW 索引属于数据库结构的一部分，写进 metadata，避免 autogenerate 误判为多余索引
+    __table_args__ = (
+        Index(
+            "ix_atomic_requirement_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
+    )
+
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     analysis_id: uuid.UUID = Field(
         foreign_key="analysis.id", ondelete="CASCADE", index=True
@@ -211,6 +221,16 @@ class DesignElement(SQLModel, table=True):
     """
 
     __tablename__ = "design_element"
+
+    # 同上：向量列的 HNSW 索引登记到 metadata
+    __table_args__ = (
+        Index(
+            "ix_design_element_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
+    )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     analysis_id: uuid.UUID = Field(
