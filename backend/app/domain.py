@@ -159,3 +159,4 @@ class Candidate:
     element_key: str
     score: float
     sources: list[str] = field(default_factory=list)
+    kind: str = ""

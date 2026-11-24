@@ -5,10 +5,10 @@
 
 ## 当前进度
 
-- **已完成**：Step 0（清理模板 + 骨架）、A1–A7、B1–B8、C1–C5、H1，共 21 / 73 步
+- **已完成**：Step 0（清理模板 + 骨架）、A1–A7、B1–B8、C1–C6、H1，共 22 / 73 步
 - **部分完成**：无
-- **当前进行到**：**C6（RRF 与候选策略）**
-- **下一步**：C6（RRF 与候选策略）→ C7（底座自测）
+- **当前进行到**：**C7（底座自测）**
+- **下一步**：C7（底座自测）→ D1（判定提示词）
 
 > 说明：H1（生成前端客户端、路由骨架、侧边栏）在 Step 0 中提前完成，不阻塞后端进度。
 
@@ -27,14 +27,14 @@
 |---|---|---|
 | A 基础设施 | 7 | 7 ✅ / 0 🟡 / 0 ⬜ |
 | B 文档结构与切块 | 8 | 8 ✅ / 0 🟡 / 0 ⬜ |
-| C LLM 与检索底座 | 7 | 5 ✅ / 0 🟡 / 2 ⬜ |
+| C LLM 与检索底座 | 7 | 6 ✅ / 0 🟡 / 1 ⬜ |
 | D 需求解析 | 8 | 0 ✅ |
 | E 设计解析 | 9 | 0 ✅ |
 | F 规则、裁决与聚合 | 12 | 0 ✅ |
 | G API 与导出 | 8 | 0 ✅ |
 | H 前端 | 9 | 1 ✅（H1） |
 | I 联调与交付 | 5 | 0 ✅ |
-| **合计** | **73** | **21 ✅ / 0 🟡 / 52 ⬜** |
+| **合计** | **73** | **22 ✅ / 0 🟡 / 51 ⬜** |
 
 ---
 
@@ -48,7 +48,7 @@
 | A4 | 移除模板功能 | 删除 Items、登录/用户/邮件、旧迁移、模板脚本与资产 | `import app.main` 与 `npm run build` 通过 | ✅ |
 | A5 | 数据模型 | `models.py` 10 张表 + `domain.py` 枚举与值对象；补中文注释 | `SQLModel.metadata` 含 10 表，`vector(1024)` 正确 | ✅ |
 | A6 | 初始迁移 | 删除模板旧迁移，生成 initial；建表 + `vector` 列 + HNSW 索引；**不建扩展** | `alembic upgrade head` 成功 | ✅（0001_initial，已在外部库验证 upgrade/downgrade） |
-| A7 | 测试脚手架 | `TEST_DATABASE_URL`、迁移 fixture、清表 fixture | 空测试能在独立库上跑通 | ✅（独立测试库 `consistency_analyzer_test`；自动迁移 + 清表；全量 61 tests passed） |
+| A7 | 测试脚手架 | `TEST_DATABASE_URL`、迁移 fixture、清表 fixture | 空测试能在独立库上跑通 | ✅（独立测试库 `consistency_analyzer_test`；自动迁移 + 清表；全量 65 tests passed） |
 
 ## B. 文档结构与切块（8 步）
 
@@ -72,7 +72,7 @@
 | C3 | 向量客户端 | `services/llm.py`：批量、L2 归一化、维度校验 | 真实调用维度正确 | ✅（URL 原样 POST；Qwen3 dim=1024 norm=1.0） |
 | C4 | BM25F | `services/retrieval.py`：jieba 分词、字段权重、打分 | 单测：名称命中排在长描述前 | ✅（5 tests；名称权重 3.0） |
 | C5 | pgvector 查询 | `<=>` 余弦、`iterative_scan`、4× 过采样 | 单测：排序正确、过滤后数量够 | ✅（3 tests；4× 后截取 k） |
-| C6 | RRF 与候选策略 | RRF(k=60)、两路 top-1 保底、同 kind ≤3、显式 ID 注入 | 单测：融合顺序确定 | ⬜ |
+| C6 | RRF 与候选策略 | RRF(k=60)、两路 top-1 保底、同 kind ≤3、显式 ID 注入 | 单测：融合顺序确定 | ✅（4 tests；`ensure_heads` + `diversify` + 显式编号） |
 | C7 | 底座自测 | 假 embedder + 真实 PG | 单测全绿 | ⬜ |
 
 ## D. 需求解析（8 步）
