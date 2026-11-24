@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import json
+import math
 import threading
 from typing import Any
 
+import httpx
 from openai import OpenAI
 
 from app.core.config import Settings
@@ -127,7 +129,7 @@ class EmbeddingError(Exception):
 
 
 class EmbeddingClient:
-    """批量向量化客户端，带维度校验。"""
+    """批量向量化客户端，带维度校验与 L2 归一化。"""
 
     def __init__(
         self,
@@ -136,25 +138,87 @@ class EmbeddingClient:
         model: str,
         dim: int,
         batch_size: int = 32,
+        timeout: int = 60,
     ) -> None:
-        """保存连接参数与目标维度。"""
-        ...
+        """保存连接参数、目标维度与批大小。"""
+        self.model = model
+        self._dim = dim
+        self._batch_size = batch_size
+        self._base_url = base_url
+        self._api_key = api_key
+        self._timeout = timeout
 
     def embed(self, texts: list[str]) -> list[list[float]]:
-        """批量向量化，并返回 L2 归一化后的向量。"""
-        ...
+        """批量向量化，返回 L2 归一化后的向量。"""
+        if not texts:
+            return []
+
+        headers = (
+            {"Authorization": f"Bearer {self._api_key}"} if self._api_key else {}
+        )
+        vectors: list[list[float]] = []
+        for start in range(0, len(texts), self._batch_size):
+            batch = texts[start : start + self._batch_size]
+            try:
+                response = httpx.post(
+                    self._base_url,
+                    json={"model": self.model, "input": batch},
+                    headers=headers,
+                    timeout=self._timeout,
+                )
+                response.raise_for_status()
+                payload = response.json()
+            except Exception as exc:  # noqa: BLE001 —— 统一包装成可读错误
+                batch_no = start // self._batch_size + 1
+                raise EmbeddingError(
+                    f"向量化请求失败（model={self.model}，batch={batch_no}）：{exc}"
+                ) from exc
+
+            data = list(payload.get("data") or [])
+            if len(data) != len(batch):
+                raise EmbeddingError(
+                    f"向量化返回数量不符：期望 {len(batch)}，实际 {len(data)}"
+                )
+            if data and all("index" in item for item in data):
+                data.sort(key=lambda item: item["index"])
+
+            for item in data:
+                vector = [float(value) for value in item.get("embedding", [])]
+                if len(vector) != self._dim:
+                    raise EmbeddingError(
+                        f"向量维度不符：期望 {self._dim}，实际 {len(vector)}"
+                        f"（model={self.model}）"
+                    )
+                vectors.append(normalize(vector))
+
+        return vectors
 
     @property
     def dim(self) -> int:
         """返回配置的向量维度。"""
-        ...
+        return self._dim
 
 
 def normalize(vector: list[float]) -> list[float]:
-    """对向量做 L2 归一化。"""
-    ...
+    """对向量做 L2 归一化；零向量返回全零。"""
+    norm = math.sqrt(sum(value * value for value in vector))
+    if norm == 0:
+        return [0.0 for _ in vector]
+    return [value / norm for value in vector]
 
 
 def build_embedding_client(settings: Settings) -> EmbeddingClient:
     """根据配置创建向量化客户端。"""
-    ...
+    if not settings.EMBEDDING_BASE_URL:
+        raise EmbeddingError("EMBEDDING_BASE_URL 未配置")
+
+    # 仅在配置了 API Key 时才传给 SDK，避免在本地开发时触发 SSL 初始化
+    api_key = settings.EMBEDDING_API_KEY if settings.EMBEDDING_API_KEY else None
+
+    return EmbeddingClient(
+        base_url=settings.EMBEDDING_BASE_URL,
+        api_key=api_key,
+        model=settings.EMBEDDING_MODEL,
+        dim=settings.EMBEDDING_DIM,
+        timeout=settings.LLM_TIMEOUT,
+    )

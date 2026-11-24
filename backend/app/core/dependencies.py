@@ -122,8 +122,8 @@ def check_embedding() -> DepStatus:
             detail=f"EMBEDDING_BASE_URL 未配置（model={settings.EMBEDDING_MODEL}）",
         )
 
-    url = f"{settings.EMBEDDING_BASE_URL.rstrip('/')}"
-    api_key = settings.EMBEDDING_API_KEY or settings.LLM_API_KEY
+    url = settings.EMBEDDING_BASE_URL
+    api_key = settings.EMBEDDING_API_KEY if settings.EMBEDDING_API_KEY else None
     headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
     payload = {"model": settings.EMBEDDING_MODEL, "input": ["ping"]}
     try:

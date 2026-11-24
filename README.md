@@ -106,4 +106,4 @@ uv run pytest -q
 
 实现顺序与当前进度见 [docs/implementation-order.md](docs/implementation-order.md)。
 
-当前进行到 **C3（向量客户端）**，之后是 C4–C7（BM25F、pgvector、RRF）。
+当前进行到 **C4（BM25F）**，之后是 C5–C7（pgvector 查询、RRF 融合、底座自测）。

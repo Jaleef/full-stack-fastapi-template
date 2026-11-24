@@ -111,6 +111,35 @@ def test_check_embedding_dimension_mismatch(monkeypatch) -> None:
     assert "维度" in status.detail
 
 
+def test_check_embedding_accepts_full_endpoint(monkeypatch) -> None:
+    """配置里带 /embeddings 时不能拼出重复路径。"""
+    monkeypatch.setattr(
+        settings, "EMBEDDING_BASE_URL", "https://example.test/v1/embeddings"
+    )
+    monkeypatch.setattr(settings, "EMBEDDING_DIM", 2)
+    captured: dict[str, str] = {}
+
+    class FakeResponse:
+        """模拟 httpx 响应。"""
+
+        def raise_for_status(self) -> None:
+            """模拟成功状态码。"""
+
+        def json(self) -> dict:
+            """模拟向量化接口响应体。"""
+            return {"data": [{"embedding": [0.1, 0.2]}]}
+
+    def fake_post(url: str, **_kwargs):
+        captured["url"] = url
+        return FakeResponse()
+
+    monkeypatch.setattr(dependencies.httpx, "post", fake_post)
+    status = dependencies.check_embedding()
+
+    assert status.ok is True
+    assert captured["url"] == "https://example.test/v1/embeddings"
+
+
 def test_dependency_report_skips_pgvector(monkeypatch) -> None:
     """PostgreSQL 不可用时跳过扩展检查，仍返回四项。"""
     monkeypatch.setattr(
