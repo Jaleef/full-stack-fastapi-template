@@ -106,4 +106,4 @@ uv run pytest -q
 
 实现顺序与当前进度见 [docs/implementation-order.md](docs/implementation-order.md)。
 
-当前进行到 **C7（底座自测）**，之后进入 D（需求解析）。
+当前进行到 **D1（判定提示词）**，C（LLM 与检索底座）已完成。
