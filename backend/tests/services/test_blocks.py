@@ -7,8 +7,14 @@ from pathlib import Path
 from docx import Document
 
 from app.domain import DocRole
+from app.services import parsing as parsing_module
 from app.services.docx_reader import iter_blocks
-from app.services.parsing import Profile, split_blocks
+from app.services.parsing import (
+    Profile,
+    join_table_rows,
+    split_blocks,
+    truncate,
+)
 
 
 def _build_docx(path: Path) -> None:
@@ -122,3 +128,54 @@ def test_split_skips_toc(tmp_path: Path) -> None:
 
     assert "1 范围\t1" not in texts
     assert "正文段落" in texts
+
+
+def test_truncate() -> None:
+    """超长文本应截断并加标记。"""
+    assert truncate("短文本") == "短文本"
+
+    result = truncate("a" * 1000)
+
+    assert len(result) == 800
+    assert result.endswith("…（已截断）")
+
+
+def test_join_table_rows() -> None:
+    """两列表格渲染成“标签: 值”，多列用竖线分隔。"""
+    rows = [["需求ID", "DT_REQ_001"], ["编号", "1", "2"]]
+    assert join_table_rows(rows) == "需求ID: DT_REQ_001\n编号 | 1 | 2"
+
+
+def test_split_sets_context_and_truncates(tmp_path: Path) -> None:
+    """候选应带章节上下文，超长段落应被截断。"""
+    path = tmp_path / "long.docx"
+    document = Document()
+    document.add_paragraph("1 范围")
+    document.add_paragraph("长" * 1000)
+    document.save(str(path))
+
+    blocks = list(iter_blocks(path))
+    candidates = split_blocks(blocks, DocRole.REQUIREMENTS, Profile(name="generic"))
+    long_candidate = next(
+        candidate for candidate in candidates if candidate.block.text.startswith("长")
+    )
+
+    assert long_candidate.context == "章节：1 范围"
+    assert len(long_candidate.block.text) == 800
+    assert long_candidate.block.text.endswith("…（已截断）")
+
+
+def test_candidate_limit(tmp_path: Path, monkeypatch) -> None:
+    """候选数量超过上限时只保留前 MAX_CANDIDATES 个。"""
+    path = tmp_path / "many.docx"
+    document = Document()
+    for index in range(5):
+        document.add_paragraph(f"段落{index}")
+    document.save(str(path))
+
+    monkeypatch.setattr(parsing_module, "MAX_CANDIDATES", 3)
+
+    blocks = list(iter_blocks(path))
+    candidates = split_blocks(blocks, DocRole.REQUIREMENTS, Profile(name="generic"))
+
+    assert len(candidates) == 3

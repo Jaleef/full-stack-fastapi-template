@@ -8,11 +8,14 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from collections.abc import Iterator
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from app.domain import Block, BlockKind, CandidateBlock, DocRole, Heading, Section
+
+logger = logging.getLogger(__name__)
 
 HEADING_RE = re.compile(r"^\s*(\d+(?:\.\d+)*)[\.、]?\s+(\S.*?)\s*$")
 TOC_RE = re.compile(r"^\s*(\S.*?)\s*(?:\t|\s{2,})\s*\d+\s*$")
@@ -20,6 +23,10 @@ TOC_ENTRY_RE = re.compile(
     r"^\s*(\d+(?:\.\d+)*)[\.、]?\s+(.*?)\s*(?:\t|\s{2,})\s*\d+\s*$"
 )
 TOC_TITLE_RE = re.compile(r"^\s*目\s*录\s*$")
+
+# 单个候选的文本上限与整个分析的候选上限
+MAX_TEXT_LENGTH = 800
+MAX_CANDIDATES = 2000
 
 
 def is_toc_entry(text: str) -> bool:
@@ -160,6 +167,34 @@ def section_path(section: Section) -> str:
     return ""
 
 
+def truncate(text: str, limit: int = MAX_TEXT_LENGTH) -> str:
+    """按长度截断文本，并在末尾标记已截断。"""
+    if len(text) <= limit:
+        return text
+    marker = "…（已截断）"
+    if limit <= len(marker):
+        return marker[:limit]
+    return text[: limit - len(marker)] + marker
+
+
+def join_table_rows(rows: list[list[str]]) -> str:
+    """把表格行渲染成“标签: 值”或“列 | 列”的文本。"""
+    lines: list[str] = []
+    for row in rows:
+        if len(row) == 2:
+            lines.append(f"{row[0]}: {row[1]}")
+        else:
+            lines.append(" | ".join(row))
+    return "\n".join(lines)
+
+
+def context_for(block: Block, section: Section) -> str:
+    """返回候选的章节上下文，形如“章节：1 范围 / 1.1 标识”。"""
+    _ = block  # 目前只用章节；保留 block 以便后续补充相邻标题
+    path = section_path(section)
+    return f"章节：{path}" if path else ""
+
+
 @dataclass(slots=True)
 class Profile:
     """某类文档的结构画像：字段别名与抽取来源。"""
@@ -222,7 +257,7 @@ def _make_table_candidate(
     return CandidateBlock(
         block=Block(
             kind=BlockKind.TABLE,
-            text="",
+            text=truncate(join_table_rows(rows)),
             index=block.index,
             table=rows,
             caption=block.caption,
@@ -230,6 +265,7 @@ def _make_table_candidate(
         section=section,
         role=role,
         reason=reason,
+        context=context_for(block, section),
     )
 
 
@@ -250,12 +286,15 @@ def split_blocks(
 
     for block, section in assign_sections(blocks):
         if block.kind == BlockKind.PARAGRAPH:
+            text = truncate(block.text)
+            payload = replace(block, text=text) if text != block.text else block
             candidates.append(
                 CandidateBlock(
-                    block=block,
+                    block=payload,
                     section=section,
                     role=role,
                     reason="paragraph",
+                    context=context_for(block, section),
                 )
             )
             continue
@@ -305,19 +344,10 @@ def split_blocks(
                 )
             )
 
+    if len(candidates) > MAX_CANDIDATES:
+        logger.warning(
+            "候选数 %d 超过上限 %d，已截断", len(candidates), MAX_CANDIDATES
+        )
+        candidates = candidates[:MAX_CANDIDATES]
+
     return candidates
-
-
-def context_for(block: Block, section: Section) -> str:
-    """拼装附着在候选上的章节上下文。"""
-    ...
-
-
-def truncate(text: str, limit: int) -> str:
-    """按长度截断文本并标记已截断。"""
-    ...
-
-
-def join_table_rows(rows: list[list[str]]) -> str:
-    """把表格行渲染成“标签: 值”的多行文本。"""
-    ...

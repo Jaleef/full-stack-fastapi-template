@@ -46,6 +46,7 @@ def _candidate_payload(candidate: CandidateBlock, ordinal: int) -> dict:
         "kind": block.kind.value,
         "block_index": block.index,
         "caption": block.caption,
+        "context": candidate.context,
         "section": _section_payload(candidate.section),
         "text": block.text,
         "table": block.table,

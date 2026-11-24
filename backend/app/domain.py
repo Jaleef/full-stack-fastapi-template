@@ -140,6 +140,7 @@ class CandidateBlock:
     section: Section
     role: DocRole
     reason: str | None = None
+    context: str = ""
 
 
 @dataclass(slots=True)
