@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import uuid
 from typing import Any
 
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session
 
 from app.models import (
@@ -14,6 +17,7 @@ from app.models import (
     AtomMapping,
     DesignElement,
     Finding,
+    LlmCache,
     ParseDecision,
     RequirementUnit,
 )
@@ -83,13 +87,26 @@ def load_context(session: Session, analysis_id: uuid.UUID) -> dict[str, Any]:
 
 
 def make_cache_key(model: str, prompt_version: str, payload: Any) -> str:
-    """根据模型、提示词版本和负载生成缓存键。"""
-    ...
+    """根据模型、提示词版本和负载生成稳定缓存键。"""
+    serialized = json.dumps(
+        {
+            "model": model,
+            "prompt_version": prompt_version,
+            "payload": payload,
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        default=str,
+    )
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
 
 def get_cached(session: Session, key: str) -> dict[str, Any] | None:
-    """读取缓存的模型响应。"""
-    ...
+    """读取缓存的模型响应；未命中返回 None。"""
+    cached = session.get(LlmCache, key)
+    if cached is None:
+        return None
+    return dict(cached.response)
 
 
 def put_cached(
@@ -99,5 +116,20 @@ def put_cached(
     prompt_version: str,
     response: dict[str, Any],
 ) -> None:
-    """写入模型响应缓存。"""
-    ...
+    """写入模型响应缓存；相同 key 已存在时保留首次结果。"""
+    if session.get(LlmCache, key) is not None:
+        return
+
+    session.add(
+        LlmCache(
+            key=key,
+            model=model,
+            prompt_version=prompt_version,
+            response=response,
+        )
+    )
+    try:
+        session.commit()
+    except IntegrityError:
+        # 并发写入同一个 key 时，以先写入的为准
+        session.rollback()
