@@ -106,4 +106,4 @@ uv run pytest -q
 
 实现顺序与当前进度见 [docs/implementation-order.md](docs/implementation-order.md)。
 
-当前进行到 **B8（阶段自测）**，之后进入 C（LLM 与检索底座）。
+当前进行到 **C1（对话客户端）**，之后是 C2–C7（缓存、向量、检索底座）。
