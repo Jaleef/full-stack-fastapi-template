@@ -10,10 +10,11 @@ from collections import Counter
 from typing import Any
 
 import jieba
+from sqlalchemy import select, text
 from sqlmodel import Session
 
 from app.domain import Candidate
-from app.models import AtomicRequirement
+from app.models import AtomicRequirement, DesignElement
 
 jieba.setLogLevel(logging.WARNING)
 
@@ -171,8 +172,31 @@ def vector_candidates(
     embedding: list[float],
     k: int = 10,
 ) -> list[tuple[uuid.UUID, float]]:
-    """用 pgvector 查询最近的设计要素。"""
-    ...
+    """用 pgvector 查询最近的设计要素，返回 (id, 余弦相似度)。
+
+    内部取 4×k 个候选，并开启 HNSW 迭代扫描，尽量在 analysis_id
+    过滤后仍能拿满 k 条；最终只返回前 k 条。
+    """
+    if k <= 0 or not embedding:
+        return []
+
+    limit = k * 4
+    ef_search = max(limit, 40)
+    session.exec(text("SET LOCAL hnsw.iterative_scan = 'relaxed_order'"))
+    session.exec(text(f"SET LOCAL hnsw.ef_search = {int(ef_search)}"))
+
+    embedding_col = DesignElement.__table__.c.embedding
+    distance = embedding_col.cosine_distance(embedding)
+    statement = (
+        select(DesignElement.id, distance.label("distance"))
+        .where(DesignElement.analysis_id == analysis_id)    # 针对特定一次 analysis 的设计要素
+        .where(embedding_col.is_not(None))                  # 过滤掉没有 embedding 的设计要素
+        .order_by(distance)                                 # 按余弦距离升序排序，距离越小相似度越高
+        .limit(limit)                                       # 取前 limit 条
+    )
+
+    rows = session.exec(statement).all()
+    return [(row[0], 1.0 - float(row[1])) for row in rows][:k]
 
 
 class CandidateRetriever:
