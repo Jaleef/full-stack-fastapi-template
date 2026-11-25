@@ -89,6 +89,8 @@ npx openapi-ts
 
 测试使用独立数据库（`TEST_DATABASE_URL`），首次运行会自动安装 pgvector、执行迁移，每个用例结束后清空业务表。
 
+涉及 LLM / embedding 的测试使用真实客户端（`real_llm` / `real_embedder`）；未配置密钥或地址时 skip，不使用假客户端。
+
 ```bash
 cd backend
 uv run pytest -q
@@ -106,4 +108,4 @@ uv run pytest -q
 
 实现顺序与当前进度见 [docs/implementation-order.md](docs/implementation-order.md)。
 
-当前进行到 **D1（判定提示词）**，C（LLM 与检索底座）已完成。
+当前进行到 **D2（判定落库）**，之后是 D3–D8（判定测试、原子化、合并）。

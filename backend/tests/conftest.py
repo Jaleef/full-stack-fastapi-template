@@ -20,6 +20,12 @@ from sqlmodel import Session, create_engine
 from app.core.config import BACKEND_DIR, settings
 from app.core.db import get_session
 from app.main import app
+from app.services.llm import (
+    EmbeddingClient,
+    LLMClient,
+    build_client,
+    build_embedding_client,
+)
 
 # 清表顺序无关紧要，CASCADE 会处理外键
 APP_TABLES = (
@@ -88,6 +94,22 @@ def test_engine() -> Generator[Engine]:
     _truncate(engine)
     yield engine
     engine.dispose()
+
+
+@pytest.fixture(scope="session")
+def real_llm() -> LLMClient:
+    """真实对话客户端；未配置密钥时跳过，不使用假客户端。"""
+    if not settings.llm_enabled:
+        pytest.skip("LLM_API_KEY 未配置")
+    return build_client(settings)
+
+
+@pytest.fixture(scope="session")
+def real_embedder() -> EmbeddingClient:
+    """真实向量客户端；未配置地址时跳过，不使用假 embedder。"""
+    if not settings.embedding_enabled:
+        pytest.skip("EMBEDDING_BASE_URL 未配置")
+    return build_embedding_client(settings)
 
 
 @pytest.fixture()
