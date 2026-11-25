@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+import json
+from datetime import UTC, datetime
+from pathlib import Path
+
 import pytest
 from sqlmodel import select
 
 from app.crud import save_decisions
 from app.domain import Block, BlockKind, CandidateBlock, DocRole, Section
 from app.models import Analysis, ParseDecision
+from app.services.docx_reader import iter_blocks
+from app.services.parsing import Profile, split_blocks
 from app.services.prompts import (
     REQUIREMENT_KINDS,
     REQUIREMENT_VERDICTS,
@@ -19,6 +25,12 @@ from app.services.requirements import (
     build_parse_decisions,
     fill_missing,
     judge_blocks,
+)
+
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+SAMPLE_REQUIREMENTS = BACKEND_DIR / "samples" / "requirements.docx"
+JUDGEMENT_ARTIFACT = (
+    BACKEND_DIR / "artifacts" / "requirement_judgement_review.json"
 )
 
 
@@ -226,3 +238,124 @@ def test_build_and_save_parse_decisions(session) -> None:
     assert len(saved) == 2
     assert {row.order_index for row in saved} == {0, 1}
     assert {row.verdict for row in saved} == {"requirement", "not_requirement"}
+
+
+def _judged_payload(
+    candidate: CandidateBlock,
+    decision: Decision | None,
+    index: int,
+    *,
+    selected_index: int,
+) -> dict:
+    """把候选块与判定结果合成可写入 JSON 的结构。"""
+    return {
+        "index": index,
+        "selected_index": selected_index,
+        "block_index": candidate.block.index,
+        "split_reason": candidate.reason,
+        "section": {
+            "number": candidate.section.number,
+            "title": candidate.section.title,
+            "path": candidate.section.path,
+        },
+        "text": candidate.block.text,
+        "table": candidate.block.table,
+        "verdict": decision.verdict if decision else None,
+        "kind": decision.kind if decision else None,
+        "judge_reason": decision.reason if decision else None,
+        "confidence": decision.confidence if decision else None,
+    }
+
+
+def test_real_document_judgement(real_llm) -> None:
+    """真实样例：80 条需求全 requirement，目录/修订/图注 not_requirement。"""
+    if not SAMPLE_REQUIREMENTS.exists():
+        pytest.skip(f"样例文档不存在：{SAMPLE_REQUIREMENTS}")
+
+    blocks = list(iter_blocks(SAMPLE_REQUIREMENTS))
+    candidates = split_blocks(
+        blocks,
+        DocRole.REQUIREMENTS,
+        Profile(name="generic"),
+    )
+
+    requirement_blocks = [
+        candidate
+        for candidate in candidates
+        if candidate.block.text.startswith("需求ID")
+    ][:80]
+    assert len(requirement_blocks) == 80
+
+    revision_blocks = [
+        candidate
+        for candidate in candidates
+        if candidate.block.text
+        in {"修改页", "本文件版本情况如下：", "详情修改内容如下："}
+    ]
+    toc_block = next(block for block in blocks if "\t" in block.text)
+    toc_candidate = CandidateBlock(
+        block=toc_block,
+        section=Section(),
+        role=DocRole.REQUIREMENTS,
+        reason="toc",
+    )
+    caption_blocks = [
+        _candidate(90001, "图3-1 系统总体结构图"),
+        _candidate(90002, "表3-1 登录字段"),
+    ]
+    non_requirement_blocks = [*revision_blocks, toc_candidate, *caption_blocks]
+
+    selected = [*requirement_blocks, *non_requirement_blocks]
+    decisions = judge_blocks(real_llm, selected, batch_size=12)
+
+    by_index = {item.index: item for item in decisions}
+    payload = {
+        "generated_at": datetime.now(UTC).isoformat(),
+        "source": str(SAMPLE_REQUIREMENTS.relative_to(BACKEND_DIR)),
+        "counts": {
+            "selected": len(selected),
+            "requirements": len(requirement_blocks),
+            "non_requirements": len(non_requirement_blocks),
+            "decisions": len(decisions),
+        },
+        "requirements": [
+            _judged_payload(
+                candidate,
+                by_index.get(index),
+                index,
+                selected_index=index,
+            )
+            for index, candidate in enumerate(requirement_blocks)
+        ],
+        "non_requirements": [
+            _judged_payload(
+                candidate,
+                by_index.get(len(requirement_blocks) + offset),
+                len(requirement_blocks) + offset,
+                selected_index=len(requirement_blocks) + offset,
+            )
+            for offset, candidate in enumerate(non_requirement_blocks)
+        ],
+        "decisions": [item.model_dump() for item in decisions],
+    }
+
+    JUDGEMENT_ARTIFACT.parent.mkdir(parents=True, exist_ok=True)
+    JUDGEMENT_ARTIFACT.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+    assert JUDGEMENT_ARTIFACT.stat().st_size > 0
+
+    assert len(decisions) == len(selected)
+    assert {item.index for item in decisions} == set(range(len(selected)))
+    assert all(item.verdict in REQUIREMENT_VERDICTS for item in decisions)
+
+    verdicts = {item.index: item.verdict for item in decisions}
+    for index in range(len(requirement_blocks)):
+        assert verdicts[index] == "requirement"
+    for index in range(
+        len(requirement_blocks),
+        len(selected),
+    ):
+        assert verdicts[index] == "not_requirement"
