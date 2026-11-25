@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import uuid
 from dataclasses import dataclass
 
 from pydantic import BaseModel
 
-from app.domain import CandidateBlock
-from app.models import AtomicRequirement
+from app.domain import CandidateBlock, DocRole
+from app.models import AtomicRequirement, ParseDecision
 from app.services.llm import LLMClient
 from app.services.prompts import (
     REQUIREMENT_KINDS,
@@ -130,7 +131,67 @@ def fill_missing(
     decisions: list[Decision],
 ) -> list[Decision]:
     """对未返回判定的块补问一次。"""
-    ...
+    if not blocks:
+        return []
+
+    existing = {
+        decision.index: decision
+        for decision in decisions
+        if 0 <= decision.index < len(blocks)
+    }
+    missing = [index for index in range(len(blocks)) if index not in existing]
+    if not missing:
+        return [existing[index] for index in sorted(existing)]
+
+    extra = judge_blocks(client, [blocks[index] for index in missing])
+    for decision in extra:
+        if not 0 <= decision.index < len(missing):
+            continue
+        global_index = missing[decision.index]
+        existing[global_index] = Decision(
+            index=global_index,
+            verdict=decision.verdict,
+            kind=decision.kind,
+            reason=decision.reason,
+            confidence=decision.confidence,
+        )
+
+    return [existing[index] for index in sorted(existing)]
+
+
+def build_parse_decisions(
+    analysis_id: uuid.UUID,
+    blocks: list[CandidateBlock],
+    decisions: list[Decision],
+    role: DocRole = DocRole.REQUIREMENTS,
+) -> list[ParseDecision]:
+    """把判定结果转成可落库的 parse_decision 行。"""
+    by_index = {decision.index: decision for decision in decisions}
+    rows: list[ParseDecision] = []
+
+    for order, block in enumerate(blocks):
+        decision = by_index.get(order)
+        if decision is None:
+            continue
+
+        text = block.block.text or block.block.caption or ""
+        rows.append(
+            ParseDecision(
+                analysis_id=analysis_id,
+                role=role.value,
+                block_index=block.block.index,
+                section_no=block.section.number or None,
+                section_title=block.section.title or None,
+                text=text,
+                verdict=decision.verdict,
+                kind=decision.kind,
+                reason=decision.reason[:512] if decision.reason else None,
+                confidence=decision.confidence,
+                order_index=order,
+            )
+        )
+
+    return rows
 
 
 class AtomDraft(BaseModel):

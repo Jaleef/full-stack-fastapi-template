@@ -3,14 +3,23 @@
 from __future__ import annotations
 
 import pytest
+from sqlmodel import select
 
+from app.crud import save_decisions
 from app.domain import Block, BlockKind, CandidateBlock, DocRole, Section
+from app.models import Analysis, ParseDecision
 from app.services.prompts import (
     REQUIREMENT_KINDS,
     REQUIREMENT_VERDICTS,
     build_requirement_judge_messages,
 )
-from app.services.requirements import _parse_decisions, judge_blocks
+from app.services.requirements import (
+    Decision,
+    _parse_decisions,
+    build_parse_decisions,
+    fill_missing,
+    judge_blocks,
+)
 
 
 def _candidate(index: int, text: str) -> CandidateBlock:
@@ -136,3 +145,84 @@ def test_judge_blocks_empty_and_invalid_batch_size(real_llm) -> None:
 
     with pytest.raises(ValueError, match="batch_size"):
         judge_blocks(real_llm, [_candidate(0, "系统应支持登录。")], batch_size=0)
+
+
+def test_fill_missing_uses_real_client(real_llm) -> None:
+    """缺少判定时应补问缺失块，已有判定保持不变。"""
+    blocks = [
+        _candidate(0, "系统应支持用户登录。"),
+        _candidate(1, "系统应支持导出报表。"),
+    ]
+    existing = [
+        Decision(
+            index=0,
+            verdict="requirement",
+            kind="functional",
+            reason="已有判定",
+            confidence=0.9,
+        )
+    ]
+    client = _CountingClient(real_llm)
+
+    decisions = fill_missing(client, blocks, existing)
+
+    assert client.calls == 1
+    assert {item.index for item in decisions} == {0, 1}
+    assert decisions[0] is existing[0]
+    assert decisions[1].verdict in REQUIREMENT_VERDICTS
+
+
+def test_fill_missing_noop_skips_client(real_llm) -> None:
+    """没有缺项时不应发起补问。"""
+    blocks = [_candidate(0, "系统应支持登录。"), _candidate(1, "系统应支持导出。")]
+    existing = [
+        Decision(index=0, verdict="requirement", kind="functional"),
+        Decision(index=1, verdict="requirement", kind="functional"),
+    ]
+    client = _CountingClient(real_llm)
+
+    decisions = fill_missing(client, blocks, existing)
+
+    assert client.calls == 0
+    assert [item.index for item in decisions] == [0, 1]
+
+
+def test_build_and_save_parse_decisions(session) -> None:
+    """判定结果应能转成 parse_decision 行并落库。"""
+    analysis = Analysis(title="D2 判定落库")
+    session.add(analysis)
+    session.commit()
+    session.refresh(analysis)
+
+    blocks = [_candidate(0, "系统应支持登录。"), _candidate(1, "目录")]
+    decisions = [
+        Decision(
+            index=0,
+            verdict="requirement",
+            kind="functional",
+            reason="规定登录行为",
+            confidence=0.95,
+        ),
+        Decision(
+            index=1,
+            verdict="not_requirement",
+            kind=None,
+            reason="目录不是需求",
+            confidence=0.99,
+        ),
+    ]
+
+    rows = build_parse_decisions(analysis.id, blocks, decisions)
+    save_decisions(session, rows)
+
+    assert len(rows) == 2
+    assert rows[0].role == DocRole.REQUIREMENTS.value
+    assert rows[0].block_index == 0
+    assert rows[0].section_no == "3"
+    assert rows[0].text == "系统应支持登录。"
+    assert rows[1].order_index == 1
+
+    saved = session.exec(select(ParseDecision)).all()
+    assert len(saved) == 2
+    assert {row.order_index for row in saved} == {0, 1}
+    assert {row.verdict for row in saved} == {"requirement", "not_requirement"}

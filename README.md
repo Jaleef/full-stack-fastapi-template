@@ -108,4 +108,4 @@ uv run pytest -q
 
 实现顺序与当前进度见 [docs/implementation-order.md](docs/implementation-order.md)。
 
-当前进行到 **D2（判定落库）**，之后是 D3–D8（判定测试、原子化、合并）。
+当前进行到 **D3（判定单测）**，之后是 D4–D8（原子化、合并）。

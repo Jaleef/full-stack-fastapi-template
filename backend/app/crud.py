@@ -53,7 +53,10 @@ def save_documents(
 
 def save_decisions(session: Session, decisions: list[ParseDecision]) -> None:
     """保存块级判定结果。"""
-    ...
+    if not decisions:
+        return
+    session.add_all(decisions)
+    session.commit()
 
 
 def save_units(session: Session, units: list[RequirementUnit]) -> None:
